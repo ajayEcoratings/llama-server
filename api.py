@@ -124,18 +124,26 @@ def run(rank, size, request_queue, response_queue):
             ] + dialogs[0]
 
         # send messages to Llama 2
-        results = generator.chat_completion(
-            dialogs,  # type: ignore
-            max_gen_len=args.max_gen_len,
-            temperature=args.temperature,
-            top_p=args.top_p,
-        )
+        try:
+            # send messages to Llama 2
+            results = generator.chat_completion(
+                dialogs,  # type: ignore
+                max_gen_len=args.max_gen_len,
+                temperature=args.temperature,
+                top_p=args.top_p,
+            )
 
-        # get response from Llama 2
-        response = results[0]['generation']
+            # get response from Llama 2
+            response = results[0]['generation']
 
-        response_queue.put(response)
-
+            response_queue.put(response)
+        except RuntimeError as e:
+            if "CUDA out of memory" in str(e):
+                # Free CUDA memory and retry or take other actions
+                torch.cuda.empty_cache()
+                # Add other handling mechanisms like reducing batch size or sequence length
+                # Add retry logic or log the error
+                pass
 
 def init_process(rank, size, fn, request_queue, response_queue, backend=args.backend):
     os.environ['MASTER_ADDR'] = args.llama_addr
