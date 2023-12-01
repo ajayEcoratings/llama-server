@@ -205,30 +205,30 @@ def health_checkup():
     return jsonify({"success":"200"})
 
 def main():
-    # print("Initializing Llama 2...")
-    # print(f"Model: {args.ckpt_dir}\n")
+    print("Initializing Llama 2...")
+    print(f"Model: {args.ckpt_dir}\n")
 
-    # processes = []
+    processes = []
 
-    # # initialize all Llama 2 processes
-    # for rank in range(args.world_size):
-    #     p = Process(target=init_process, args=(rank, args.world_size, run, request_queues[rank], response_queues[rank]))
-    #     p.start()
-    #     processes.append(p)
+    # initialize all Llama 2 processes
+    for rank in range(args.world_size):
+        p = Process(target=init_process, args=(rank, args.world_size, run, request_queues[rank], response_queues[rank]))
+        p.start()
+        processes.append(p)
 
-    # # wait for Llama 2 initialization
-    # for rank in range(args.world_size):
-    #     response = response_queues[rank].get()
+    # wait for Llama 2 initialization
+    for rank in range(args.world_size):
+        response = response_queues[rank].get()
 
-    # print("\nStarting Flask API...")
+    print("\nStarting Flask API...")
 
     app = Flask(__name__)
     app.route("/chat", methods=["POST"])(message_route)
     app.route('/logs', methods=["GET"])(health_checkup)
     app.run(host='0.0.0.0', port=5000, debug=True)
 
-    # for p in processes:
-    #     p.join()
+    for p in processes:
+        p.join()
 
 if __name__ == "__main__":
     main()
